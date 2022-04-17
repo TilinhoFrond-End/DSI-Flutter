@@ -1,6 +1,3 @@
-// Copyright 2018 The Flutter team. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +15,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Primeiro App',
-      home: RandomWords(),
+      home: DefaultTabController(
+        length: 2,
+        child: RandomWords(),
+      ),
     );
   }
 }
@@ -31,7 +31,8 @@ class RandomWords extends StatefulWidget {
 }
 
 class _RandomWordsState extends State<RandomWords> {
-  var _suggestions = [];
+  final _suggestions = [];
+  final isSelected = <bool>[true, false];
   final _biggerFont = const TextStyle(fontSize: 18.0);
 
   @override
@@ -39,137 +40,95 @@ class _RandomWordsState extends State<RandomWords> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Palavras em English'),
+        bottom: TabBar(
+          tabs: <Widget> [
+            Tab(text: 'Lista Vertical'),
+            Tab(text: 'Lista Grid'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.list),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DetailPage()
-              ),
-            );
-          }),
+            onPressed: () {}
+          ),
         ],
       ),
-    body: _buildSuggestions()
+    body: TabBarView(
+        children: <Widget> [
+          _buildSuggestions(),
+          _gridsuggestions(),
+        ],
+      ),
     );
   }
 
   Widget _buildSuggestions(){
-          return new ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemBuilder: /*1*/ (BuildContext _context, i) {
-              if (i.isOdd) return const Divider();
-              final index = i ~/ 2;
-              if (index >= _suggestions.length) {
-                _suggestions.addAll(generateWordPairs().take(10));
-              }
-              return Card(
-                child: ListTile(
-                  title: _buildRow(_suggestions[index]),
-                  trailing:
-                  PopupMenuButton(
-                    itemBuilder: (context) {
-                      return [
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: ListTile(
-                            leading: Icon(Icons.delete),
-                            title: Text('Delete'),
-                          ),
-                          onTap: (){
-                            setState(() {
-                              _suggestions.removeAt(index);
-                            });
-                          },
-                        ),
-                      ];
+    return new ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemBuilder: /*1*/ (BuildContext _context, i) {
+        if (i.isOdd) return const Divider();
+        final index = i ~/ 2;
+        if (index >= _suggestions.length) {
+          _suggestions.addAll(generateWordPairs().take(10));
+        }
+        return ListTile(
+            title: Text(_suggestions[index].asPascalCase),
+            trailing:
+            PopupMenuButton(
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(Icons.delete),
+                      title: Text('Delete'),
+                    ),
+                    onTap: (){
+                      setState(() {
+                        _suggestions.removeAt(index);
+                      });
                     },
                   ),
-                ),
-              );
-            }
+                ];
+              },
+            ),
           );
-        }
-
-  /*void edit(int index) => showDialog(
-      context: context,
-      builder: (context) {
-        final palavra = _suggestions[index];
-
-        return AlertDialog(
-          content: TextFormField(
-            initialValue: palavra,
-            onChanged: (name) => setState(() {
-              palavra = name;
-            }),
-          ),
-        );
-      });*/
-
-  Widget _buildRow(WordPair pair) {
-    final bool alreadySaved = savedGlobal.contains(pair);
-
-    return new ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: new Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-        semanticLabel: alreadySaved ? 'Remove from saved' : 'Save',
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            savedGlobal.remove(pair);
-          } else {
-            savedGlobal.add(pair);
-          }
-        });
-      },
+      }
     );
   }
-}
 
-class DetailPage extends StatefulWidget {
-  @override
-  _DetailPageState createState() => _DetailPageState();
-}
-
-class _DetailPageState extends State<DetailPage> {
-  final TextStyle _biggerFont = const TextStyle(fontSize: 18.0);
-  //bool _isEnabled = false;
-
-  @override
-  Widget build(BuildContext context) {
-    Iterable<ListTile> tiles = savedGlobal.map((WordPair pair) {
-      return new ListTile(
-        onLongPress: () {
-          setState(() {
-            savedGlobal.remove(pair);
-            Navigator.of(context).pop();
-          });
-        },
-        title: new Text(
-          pair.asPascalCase,
-          style: _biggerFont,
-        ),
-      );
-    });
-
-    final List<Widget> divided = ListTile.divideTiles(
-      context: context,
-      tiles: tiles,
-    ).toList();
-
-    return new Scaffold(
-      appBar: new AppBar(
-        title: const Text('Saved Suggestions'),
-      ),
-      body: new ListView(children: divided),
+  Widget _gridsuggestions() {
+    return new GridView.builder(
+      itemCount: 10,
+      gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      itemBuilder: /*1*/ (BuildContext _context, i) {
+        final index = i;
+        if (index >= _suggestions.length) {
+          _suggestions.addAll(generateWordPairs().take(10));
+        }
+        return ListTile(
+          title: Text(_suggestions[index].asPascalCase),
+          trailing:
+          PopupMenuButton(
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(Icons.delete),
+                    title: Text('Delete'),
+                  ),
+                  onTap: (){
+                    setState(() {
+                      _suggestions.removeAt(index);
+                    });
+                  },
+                ),
+              ];
+            },
+          ),
+        );
+      }
     );
   }
 }
